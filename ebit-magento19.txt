@@ -1,0 +1,52 @@
+<?php
+	$order = Mage::getModel('sales/order');
+	$order->loadByIncrementId($this->getOrderId());
+	$amount = number_format($order->getGrandTotal(),2);
+  $email = $order->getCustomerEmail();
+  $dob = $order->getCustomerDob();
+  $dob = explode(' ', $dob);
+  $dob2 = explode('-', $dob[0]);
+  $dobYear = $dob2[0];
+  $dobMonth = $dob2[1];
+  $dobDay = $dob2[2];
+  $aniversario = $dobDay.'-'.$dobMonth.'-'.$dobYear;
+  $gender = $order->getCustomerGender();
+  if($gender==1){
+    $gender = 'M';
+  }else if ($gender==2){
+    $gender = 'F'; 
+  }
+  $primaryAddress = Mage::getSingleton('customer/session')->getCustomer()
+                  ->getPrimaryShippingAddress();
+  $zip = $primaryAddress->getPostcode();
+  $shippingTax = number_format($order->getShippingAmount(),2);
+  $total = $order->getGrandTotal();
+  $orderid = $order->getIncrementId();
+  if (count($order->getAllVisibleItems())>1){
+    $items = $order->getAllVisibleItems();
+    $value = "";
+    $qty = "";
+    $name = "";
+    $sky = "";
+    foreach($items as $i):
+      $value1 = $i->getPrice() - $i->getDiscountAmount();
+      $value = $value.number_format($value1,2).'|';
+      $qty = $qty.number_format($i['qty_ordered'],0).'|';
+      $name = $name.str_replace('"', '',$i->getName()).'|';
+      $sku = $sku.$i->getSku().'|';
+    endforeach;
+  }else{
+    $item = $order->getAllVisibleItems();
+    $value = $item[0]->getPrice() - $item[0]->getDiscountAmount();
+    $value = number_format($value,2);
+    $qty = number_format($item[0]['qty_ordered'],0);
+    $name = str_replace('"', '',$item[0]->getName());
+    $sku = $item[0]->getSku();
+  }
+?>
+
+<p>
+  <param id="ebitParam" value="email=<?php echo $email; ?>&gender=<?php echo $gender; ?>&birthDay=<?php echo $aniversario; ?>&zipCode=<?php echo $zip; ?>&mktSaleID=0&plataform=0&deliveryTime={{PRAZO_MAXIMO_ENTREGA}}&deliveryTax=<?php echo $shippingTax; ?>&totalSpent=<?php echo $amount; ?>&value=<?php echo $value; ?>&quantity=<?php echo $qty; ?>&productName=<?php echo $name; ?>&transactionId=<?php echo $orderid; ?>&sku=<?php echo $sku; ?>&storeId={{STORE_ID}}"/>
+  <a id="bannerEbit"></a>
+  <script type="text/javascript" id="getSelo" src="https://imgs.ebit.com.br/ebitBR/selo-ebit/js/getSelo.js?{{STORE_ID}}&lightbox=true"></script>
+</p>
